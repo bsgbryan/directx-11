@@ -175,6 +175,11 @@
   <ItemGroup>
     <None Include=".gitignore" />
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="InitDirect3D.h" />
+    <ClInclude Include="QueryRefreshRate.h" />
+    <ClInclude Include="SafeRelease.h" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
