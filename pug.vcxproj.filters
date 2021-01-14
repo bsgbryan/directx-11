@@ -27,4 +27,7 @@
       <Filter>Source Files</Filter>
     </FxCompile>
   </ItemGroup>
+  <ItemGroup>
+    <None Include=".gitignore" />
+  </ItemGroup>
 </Project>

@@ -32,7 +32,7 @@ using namespace DirectX;
 const LONG g_WindowWidth = 1280;
 const LONG g_WindowHeight = 720;
 LPCTSTR  g_WindowClassName = TEXT("DirectXWindowClass");
-LPCTSTR  g_WindowName = TEXT("DirectX Template");
+LPCTSTR  g_WindowName = TEXT("pug");
 HWND g_WindowHandle = 0;
 
 const BOOL g_EnableVSync = FALSE;
