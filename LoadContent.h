@@ -5,7 +5,32 @@
 #include "InitDirectX.h"
 #include "VertexPositionColor.h"
 
+#pragma comment(lib, "d3dcompiler.lib")
+
 XMMATRIX g_ProjectionMatrix;
+
+D3D11_BUFFER_DESC CreateBufferDescription(D3D11_BIND_FLAG flag, UINT byteWidth) {
+    D3D11_BUFFER_DESC desc;
+
+    ZeroMemory(&desc, sizeof(D3D11_BUFFER_DESC));
+
+    desc.BindFlags = flag;
+    desc.ByteWidth = byteWidth;
+    desc.CPUAccessFlags = 0;
+    desc.Usage = D3D11_USAGE_DEFAULT;
+
+    return desc;
+}
+
+D3D11_SUBRESOURCE_DATA CreateResourceData() {
+    D3D11_SUBRESOURCE_DATA resourceData;
+
+    ZeroMemory(&resourceData, sizeof(D3D11_SUBRESOURCE_DATA));
+
+    return resourceData;
+}
+
+D3D11_BUFFER_DESC constantBufferDesc = CreateBufferDescription(D3D11_BIND_CONSTANT_BUFFER, sizeof(XMMATRIX));
 
 template<typename I, typename V, std::size_t IS, std::size_t VS>
 bool LoadContent(
@@ -16,19 +41,10 @@ bool LoadContent(
 ) {
     assert(context.device);
 
-    // Create an initialize the vertex buffer.
-    D3D11_BUFFER_DESC vertexBufferDesc;
+    D3D11_BUFFER_DESC vertexBufferDesc = CreateBufferDescription(D3D11_BIND_VERTEX_BUFFER, byteWidth);
+    D3D11_BUFFER_DESC indexBufferDesc = CreateBufferDescription(D3D11_BIND_INDEX_BUFFER, sizeof(WORD) * IS);
 
-    ZeroMemory(&vertexBufferDesc, sizeof(D3D11_BUFFER_DESC));
-
-    vertexBufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-    vertexBufferDesc.ByteWidth = byteWidth;
-    vertexBufferDesc.CPUAccessFlags = 0;
-    vertexBufferDesc.Usage = D3D11_USAGE_DEFAULT;
-
-    D3D11_SUBRESOURCE_DATA resourceData;
-
-    ZeroMemory(&resourceData, sizeof(D3D11_SUBRESOURCE_DATA));
+    D3D11_SUBRESOURCE_DATA resourceData = CreateResourceData();
 
     resourceData.pSysMem = vertices;
 
@@ -37,30 +53,12 @@ bool LoadContent(
     if (FAILED(hr))
         return false;
 
-    // Create and initialize the index buffer.
-    D3D11_BUFFER_DESC indexBufferDesc;
-
-    ZeroMemory(&indexBufferDesc, sizeof(D3D11_BUFFER_DESC));
-
-    indexBufferDesc.BindFlags = D3D11_BIND_INDEX_BUFFER;
-    indexBufferDesc.ByteWidth = sizeof(WORD) * IS;
-    indexBufferDesc.CPUAccessFlags = 0;
-    indexBufferDesc.Usage = D3D11_USAGE_DEFAULT;
     resourceData.pSysMem = indicies;
 
     hr = context.device->CreateBuffer(&indexBufferDesc, &resourceData, &context.indexBuffer);
 
     if (FAILED(hr))
         return false;
-
-    // Create the constant buffers for the variables defined in the vertex shader.
-    D3D11_BUFFER_DESC constantBufferDesc;
-    ZeroMemory(&constantBufferDesc, sizeof(D3D11_BUFFER_DESC));
-
-    constantBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-    constantBufferDesc.ByteWidth = sizeof(XMMATRIX);
-    constantBufferDesc.CPUAccessFlags = 0;
-    constantBufferDesc.Usage = D3D11_USAGE_DEFAULT;
 
     hr = context.device->CreateBuffer(&constantBufferDesc, nullptr, &context.constantBuffers[CB_Application]);
 

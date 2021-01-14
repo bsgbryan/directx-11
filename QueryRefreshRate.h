@@ -1,8 +1,12 @@
 #pragma once
+
 #include <d3d11.h>
 #include <DirectXMath.h>
 #include <iostream>
+
 #include "SafeRelease.h"
+
+#pragma comment(lib, "dxgi.lib")
 
 // This function was inspired by:
 // http://www.rastertek.com/dx11tut03.html

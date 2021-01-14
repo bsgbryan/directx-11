@@ -7,6 +7,8 @@
 #include "SafeRelease.h"
 #include "QueryRefreshRate.h"
 
+#pragma comment(lib, "d3d11.lib")
+
 enum ConstantBuffer {
     CB_Application,
     CB_Frame,

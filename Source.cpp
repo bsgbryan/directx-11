@@ -19,12 +19,6 @@
 #include "Cleanup.h"
 #include "VertexPositionColor.h"
 
-// Directt X 11 library dependencies
-#pragma comment(lib, "d3d11.lib")
-#pragma comment(lib, "dxgi.lib")
-#pragma comment(lib, "d3dcompiler.lib")
-#pragma comment(lib, "winmm.lib")
-
 using namespace DirectX;
 
 VertexPosColor g_Vertices[8] = {

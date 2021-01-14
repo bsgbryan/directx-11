@@ -8,6 +8,8 @@
 
 #include "InitDirectX.h"
 
+#pragma comment(lib, "winmm.lib")
+
 using namespace DirectX;
 
 XMMATRIX g_WorldMatrix;
