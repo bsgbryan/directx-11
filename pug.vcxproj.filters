@@ -31,9 +31,6 @@
     <None Include=".gitignore" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="InitDirect3D.h">
-      <Filter>Source Files</Filter>
-    </ClInclude>
     <ClInclude Include="SafeRelease.h">
       <Filter>Source Files</Filter>
     </ClInclude>
@@ -41,6 +38,24 @@
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="Windows.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Loop.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="InitDirectX.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="LoadContent.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="UnloadContent.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Cleanup.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="VertexPositionColor.h">
       <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>

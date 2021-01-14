@@ -7,27 +7,35 @@
 #include "SafeRelease.h"
 #include "QueryRefreshRate.h"
 
-ID3D11Device* g_d3dDevice = nullptr;
-ID3D11DeviceContext* g_d3dDeviceContext = nullptr;
-IDXGISwapChain* g_d3dSwapChain = nullptr;
+enum ConstantBuffer {
+    CB_Application,
+    CB_Frame,
+    CB_Object
+};
 
-// Render target view for the back buffer of the swap chain.
-ID3D11RenderTargetView* g_d3dRenderTargetView = nullptr;
-// Depth/stencil view for use as a depth buffer.
-ID3D11DepthStencilView* g_d3dDepthStencilView = nullptr;
-// A texture to associate to the depth stencil view.
-ID3D11Texture2D* g_d3dDepthStencilBuffer = nullptr;
-
-// Define the functionality of the depth/stencil stages.
-ID3D11DepthStencilState* g_d3dDepthStencilState = nullptr;
-// Define the functionality of the rasterizer stage.
-ID3D11RasterizerState* g_d3dRasterizerState = nullptr;
-D3D11_VIEWPORT g_Viewport = { 0 };
+struct D3DContext {
+    BOOL enableVSync = false;
+    ID3D11Device* device;
+    ID3D11DeviceContext* deviceContext;
+    ID3D11InputLayout* inputLayout;
+    ID3D11RasterizerState* rasterizerState;
+    IDXGISwapChain* swapChain;
+    ID3D11Buffer* vertexBuffer;
+    ID3D11Buffer* indexBuffer;
+    ID3D11VertexShader* vertexShader;
+    ID3D11PixelShader* pixelShader;
+    ID3D11RenderTargetView* renderTargetView;
+    ID3D11DepthStencilView* depthStencilView;
+    ID3D11DepthStencilState* depthStencilState;
+    ID3D11Texture2D* depthStencilBuffer;
+    ID3D11Buffer* constantBuffers[3];
+    D3D11_VIEWPORT viewport = { 0 };
+};
 
 /**
  * Initialize the DirectX device and swap chain.
  */
-int InitDirectX(HINSTANCE hInstance, BOOL vSync) {
+int InitDirectX(HINSTANCE hInstance, D3DContext& context) {
     // A window handle must have been created already.
     assert(g_WindowHandle != 0);
 
@@ -46,7 +54,7 @@ int InitDirectX(HINSTANCE hInstance, BOOL vSync) {
     swapChainDesc.BufferDesc.Width = clientWidth;
     swapChainDesc.BufferDesc.Height = clientHeight;
     swapChainDesc.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-    swapChainDesc.BufferDesc.RefreshRate = QueryRefreshRate(clientWidth, clientHeight, vSync);
+    swapChainDesc.BufferDesc.RefreshRate = QueryRefreshRate(clientWidth, clientHeight, context.enableVSync);
     swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
     swapChainDesc.OutputWindow = g_WindowHandle;
     swapChainDesc.SampleDesc.Count = 1;
@@ -83,10 +91,10 @@ int InitDirectX(HINSTANCE hInstance, BOOL vSync) {
         _countof(featureLevels),
         D3D11_SDK_VERSION,
         &swapChainDesc,
-        &g_d3dSwapChain,
-        &g_d3dDevice,
+        &context.swapChain,
+        &context.device,
         &featureLevel,
-        &g_d3dDeviceContext
+        &context.deviceContext
     );
 
     if (hr == E_INVALIDARG)
@@ -99,10 +107,10 @@ int InitDirectX(HINSTANCE hInstance, BOOL vSync) {
             _countof(featureLevels) - 1,
             D3D11_SDK_VERSION,
             &swapChainDesc,
-            &g_d3dSwapChain,
-            &g_d3dDevice,
+            &context.swapChain,
+            &context.device,
             &featureLevel,
-            &g_d3dDeviceContext
+            &context.deviceContext
         );
 
     if (FAILED(hr))
@@ -112,12 +120,12 @@ int InitDirectX(HINSTANCE hInstance, BOOL vSync) {
     // render target view.
     ID3D11Texture2D* backBuffer;
 
-    hr = g_d3dSwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (LPVOID*)&backBuffer);
+    hr = context.swapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (LPVOID*)&backBuffer);
 
     if (FAILED(hr))
         return -1;
 
-    hr = g_d3dDevice->CreateRenderTargetView(backBuffer, nullptr, &g_d3dRenderTargetView);
+    hr = context.device->CreateRenderTargetView(backBuffer, nullptr, &context.renderTargetView);
 
     if (FAILED(hr))
         return -1;
@@ -140,12 +148,12 @@ int InitDirectX(HINSTANCE hInstance, BOOL vSync) {
     depthStencilBufferDesc.SampleDesc.Quality = 0;
     depthStencilBufferDesc.Usage = D3D11_USAGE_DEFAULT;
 
-    hr = g_d3dDevice->CreateTexture2D(&depthStencilBufferDesc, nullptr, &g_d3dDepthStencilBuffer);
+    hr = context.device->CreateTexture2D(&depthStencilBufferDesc, nullptr, &context.depthStencilBuffer);
 
     if (FAILED(hr))
         return -1;
 
-    hr = g_d3dDevice->CreateDepthStencilView(g_d3dDepthStencilBuffer, nullptr, &g_d3dDepthStencilView);
+    hr = context.device->CreateDepthStencilView(context.depthStencilBuffer, nullptr, &context.depthStencilView);
 
     if (FAILED(hr))
         return -1;
@@ -160,7 +168,7 @@ int InitDirectX(HINSTANCE hInstance, BOOL vSync) {
     depthStencilStateDesc.DepthFunc = D3D11_COMPARISON_LESS;
     depthStencilStateDesc.StencilEnable = FALSE;
 
-    hr = g_d3dDevice->CreateDepthStencilState(&depthStencilStateDesc, &g_d3dDepthStencilState);
+    hr = context.device->CreateDepthStencilState(&depthStencilStateDesc, &context.depthStencilState);
 
     if (FAILED(hr))
         return -1;
@@ -182,18 +190,18 @@ int InitDirectX(HINSTANCE hInstance, BOOL vSync) {
     rasterizerDesc.SlopeScaledDepthBias = 0.0f;
 
     // Create the rasterizer state object.
-    hr = g_d3dDevice->CreateRasterizerState(&rasterizerDesc, &g_d3dRasterizerState);
+    hr = context.device->CreateRasterizerState(&rasterizerDesc, &context.rasterizerState);
 
     if (FAILED(hr))
         return -1;
 
     // Initialize the viewport to occupy the entire client area.
-    g_Viewport.Width = static_cast<float>(clientWidth);
-    g_Viewport.Height = static_cast<float>(clientHeight);
-    g_Viewport.TopLeftX = 0.0f;
-    g_Viewport.TopLeftY = 0.0f;
-    g_Viewport.MinDepth = 0.0f;
-    g_Viewport.MaxDepth = 1.0f;
+    context.viewport.Width = static_cast<float>(clientWidth);
+    context.viewport.Height = static_cast<float>(clientHeight);
+    context.viewport.TopLeftX = 0.0f;
+    context.viewport.TopLeftY = 0.0f;
+    context.viewport.MinDepth = 0.0f;
+    context.viewport.MaxDepth = 1.0f;
 
     return 0;
 }

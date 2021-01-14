@@ -176,9 +176,14 @@
     <None Include=".gitignore" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="InitDirect3D.h" />
+    <ClInclude Include="Cleanup.h" />
+    <ClInclude Include="InitDirectX.h" />
+    <ClInclude Include="LoadContent.h" />
     <ClInclude Include="QueryRefreshRate.h" />
     <ClInclude Include="SafeRelease.h" />
+    <ClInclude Include="Loop.h" />
+    <ClInclude Include="UnloadContent.h" />
+    <ClInclude Include="VertexPositionColor.h" />
     <ClInclude Include="Windows.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
