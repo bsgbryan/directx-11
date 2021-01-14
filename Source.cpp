@@ -87,9 +87,6 @@ WORD g_Indicies[36] = {
 // Forward declarations.
 LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 
-template< class ShaderClass >
-ShaderClass* LoadShader(const std::wstring& fileName, const std::string& entryPoint, const std::string& profile);
-
 bool LoadContent();
 void UnloadContent();
 
