@@ -2,10 +2,10 @@
 
 #include <d3d11.h>
 #include <DirectXMath.h>
+
+#include "Windows.h"
 #include "SafeRelease.h"
 #include "QueryRefreshRate.h"
-
-HWND g_WindowHandle = 0;
 
 ID3D11Device* g_d3dDevice = nullptr;
 ID3D11DeviceContext* g_d3dDeviceContext = nullptr;

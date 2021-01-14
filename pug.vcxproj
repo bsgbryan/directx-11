@@ -179,6 +179,7 @@
     <ClInclude Include="InitDirect3D.h" />
     <ClInclude Include="QueryRefreshRate.h" />
     <ClInclude Include="SafeRelease.h" />
+    <ClInclude Include="Windows.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
