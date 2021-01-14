@@ -31,26 +31,6 @@ LPCTSTR  g_WindowName = TEXT("pug");
 const BOOL g_EnableVSync = FALSE;
 // END
 
-// START Direct X specific variables
-// Direct3D device and swap chain.
-//ID3D11Device* g_d3dDevice = nullptr;
-//ID3D11DeviceContext* g_d3dDeviceContext = nullptr;
-//IDXGISwapChain* g_d3dSwapChain = nullptr;
-//
-//// Render target view for the back buffer of the swap chain.
-//ID3D11RenderTargetView* g_d3dRenderTargetView = nullptr;
-//// Depth/stencil view for use as a depth buffer.
-//ID3D11DepthStencilView* g_d3dDepthStencilView = nullptr;
-//// A texture to associate to the depth stencil view.
-//ID3D11Texture2D* g_d3dDepthStencilBuffer = nullptr;
-//
-//// Define the functionality of the depth/stencil stages.
-//ID3D11DepthStencilState* g_d3dDepthStencilState = nullptr;
-//// Define the functionality of the rasterizer stage.
-//ID3D11RasterizerState* g_d3dRasterizerState = nullptr;
-//D3D11_VIEWPORT g_Viewport = { 0 };
-// END
-
 // START Application specific variables
 // Vertex buffer data
 ID3D11InputLayout* g_d3dInputLayout = nullptr;
