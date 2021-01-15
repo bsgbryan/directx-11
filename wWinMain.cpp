@@ -3,8 +3,8 @@
 
 #include "Windows.h"
 #include "InitDirectX.h"
-#include "Loop.h"
 #include "LoadContent.h"
+#include "Loop.h"
 #include "UnloadContent.h"
 #include "Cleanup.h"
 #include "VertexPositionColor.h"
