@@ -5,23 +5,13 @@
 #include "InitDirectX.h"
 #include "VertexPositionColor.h"
 
+#include "structs/Descriptions.h"
+
 #pragma comment(lib, "d3dcompiler.lib")
 
+using Descriptions::Buffer;
+
 XMMATRIX g_ProjectionMatrix;
-
-D3D11_BUFFER_DESC CreateBufferDescription(D3D11_BIND_FLAG flag, UINT byteWidth) {
-    D3D11_BUFFER_DESC desc;
-
-    ZeroMemory(&desc, sizeof(D3D11_BUFFER_DESC));
-
-    desc.BindFlags = flag;
-    desc.ByteWidth = byteWidth;
-    desc.CPUAccessFlags = 0;
-    desc.Usage = D3D11_USAGE_DEFAULT;
-
-    return desc;
-}
-
 D3D11_SUBRESOURCE_DATA CreateResourceData() {
     D3D11_SUBRESOURCE_DATA resourceData;
 
@@ -30,7 +20,7 @@ D3D11_SUBRESOURCE_DATA CreateResourceData() {
     return resourceData;
 }
 
-D3D11_BUFFER_DESC constantBufferDesc = CreateBufferDescription(D3D11_BIND_CONSTANT_BUFFER, sizeof(XMMATRIX));
+D3D11_BUFFER_DESC constantBufferDesc = Buffer(D3D11_BIND_CONSTANT_BUFFER, sizeof(XMMATRIX));
 
 template<typename I, typename V, std::size_t IS, std::size_t VS>
 bool LoadContent(
@@ -41,8 +31,8 @@ bool LoadContent(
 ) {
     assert(context.device);
 
-    D3D11_BUFFER_DESC vertexBufferDesc = CreateBufferDescription(D3D11_BIND_VERTEX_BUFFER, byteWidth);
-    D3D11_BUFFER_DESC indexBufferDesc = CreateBufferDescription(D3D11_BIND_INDEX_BUFFER, sizeof(WORD) * IS);
+    D3D11_BUFFER_DESC vertexBufferDesc = Buffer(D3D11_BIND_VERTEX_BUFFER, byteWidth);
+    D3D11_BUFFER_DESC indexBufferDesc = Buffer(D3D11_BIND_INDEX_BUFFER, sizeof(WORD) * IS);
 
     D3D11_SUBRESOURCE_DATA resourceData = CreateResourceData();
 

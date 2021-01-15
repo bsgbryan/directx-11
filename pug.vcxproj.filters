@@ -58,5 +58,8 @@
     <ClInclude Include="VertexPositionColor.h">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="structs\Descriptions.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
