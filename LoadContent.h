@@ -3,16 +3,22 @@
 #include <d3d11.h>
 #include <d3dcompiler.h>
 
-#include "InitDirectX.h"
-#include "VertexPositionColor.h"
+#include "enums/ConstantBuffers.h"
 
+#include "structs/VertexPositionColor.h"
 #include "structs/Descriptions.h"
 
 #pragma comment(lib, "d3dcompiler.lib")
 
+using DirectX::XMMATRIX;
+
+using DirectX::XMConvertToRadians;
+using DirectX::XMMatrixPerspectiveFovLH;
+
 using Descriptions::Buffer;
 
 XMMATRIX g_ProjectionMatrix;
+
 D3D11_SUBRESOURCE_DATA CreateResourceData() {
     D3D11_SUBRESOURCE_DATA resourceData;
 

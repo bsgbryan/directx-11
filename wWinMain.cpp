@@ -7,9 +7,12 @@
 #include "Loop.h"
 #include "UnloadContent.h"
 #include "Cleanup.h"
-#include "VertexPositionColor.h"
+
+#include "structs/VertexPositionColor.h"
 
 using DirectX::XMFLOAT3;
+
+using DirectX::XMVerifyCPUSupport;
 
 VertexPosColor g_Vertices[8] = {
     // Position                    // Color

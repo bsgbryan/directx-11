@@ -177,14 +177,16 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Cleanup.h" />
+    <ClInclude Include="enums\ConstantBuffers.h" />
     <ClInclude Include="InitDirectX.h" />
     <ClInclude Include="LoadContent.h" />
     <ClInclude Include="QueryRefreshRate.h" />
     <ClInclude Include="SafeRelease.h" />
     <ClInclude Include="Loop.h" />
+    <ClInclude Include="structs\D3DContext.h" />
     <ClInclude Include="structs\Descriptions.h" />
+    <ClInclude Include="structs\VertexPositionColor.h" />
     <ClInclude Include="UnloadContent.h" />
-    <ClInclude Include="VertexPositionColor.h" />
     <ClInclude Include="Windows.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

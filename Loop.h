@@ -10,7 +10,15 @@
 
 #pragma comment(lib, "winmm.lib")
 
-using namespace DirectX;
+using DirectX::XMMATRIX;
+using DirectX::XMVECTOR;
+
+using DirectX::XMVectorSet;
+using DirectX::XMMatrixLookAtLH;
+using DirectX::XMMatrixRotationAxis;
+using DirectX::XMConvertToRadians;
+
+using DirectX::Colors::CornflowerBlue;
 
 XMMATRIX g_WorldMatrix;
 XMMATRIX g_ViewMatrix;
@@ -41,7 +49,7 @@ void Render(D3DContext& context, UINT vertexStride, UINT indexCount) {
     assert(context.device);
     assert(context.deviceContext);
 
-    Clear(context, Colors::CornflowerBlue, 1.0f, 0);
+    Clear(context, CornflowerBlue, 1.0f, 0);
 
     const UINT offset = 0;
 

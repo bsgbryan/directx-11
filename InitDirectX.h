@@ -6,7 +6,10 @@
 #include "Windows.h"
 #include "SafeRelease.h"
 
+#include "enums/ConstantBuffers.h"
+
 #include "structs/Descriptions.h"
+#include "structs/D3DContext.h"
 
 #pragma comment(lib, "d3d11.lib")
 
@@ -15,55 +18,54 @@ using Descriptions::SwapChain;
 using Descriptions::DepthStencil;
 using Descriptions::Rasterizer;
 
-enum ConstantBuffer {
-    CB_Application,
-    CB_Frame,
-    CB_Object
-};
+bool CreateDepthStencil(D3DContext& context) {
+    D3D11_TEXTURE2D_DESC desc = Texture2D(context.width, context.height);
 
-struct D3DContext {
-    BOOL enableVSync = false;
-    ID3D11Device* device;
-    ID3D11DeviceContext* deviceContext;
-    ID3D11InputLayout* inputLayout;
-    ID3D11RasterizerState* rasterizerState;
-    IDXGISwapChain* swapChain;
-    ID3D11Buffer* vertexBuffer;
-    ID3D11Buffer* indexBuffer;
-    ID3D11VertexShader* vertexShader;
-    ID3D11PixelShader* pixelShader;
-    ID3D11RenderTargetView* renderTargetView;
-    ID3D11DepthStencilView* depthStencilView;
-    ID3D11DepthStencilState* depthStencilState;
-    ID3D11Texture2D* depthStencilBuffer;
-    ID3D11Buffer* constantBuffers[3];
-    D3D11_VIEWPORT viewport = { 0 };
-};
+    return (
+        FAILED(context.device->CreateTexture2D(&desc, nullptr, &context.depthStencilBuffer))
+        ||
+        FAILED(context.device->CreateDepthStencilView(context.depthStencilBuffer, nullptr, &context.depthStencilView))
+    ) == false;
+}
 
-/**
- * Initialize the DirectX device and swap chain.
- */
-int InitDirectX(HINSTANCE hInstance, D3DContext& context) {
-    // A window handle must have been created already.
-    assert(g_WindowHandle != 0);
+bool CreateRenderTargetView(D3DContext& context) {
+    ID3D11Texture2D* backBuffer;
 
+    bool succeeded = (
+        FAILED(context.swapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (LPVOID*)&backBuffer))
+        ||
+        FAILED(context.device->CreateRenderTargetView(backBuffer, nullptr, &context.renderTargetView))
+    ) == false;
+
+    SafeRelease(backBuffer);
+
+    return succeeded;
+}
+
+bool CreateRasterizerState(D3DContext& context) {
+    D3D11_RASTERIZER_DESC desc = Rasterizer();
+
+    return FAILED(context.device->CreateRasterizerState(&desc, &context.rasterizerState)) == false;
+}
+
+bool CreateDeviceAndSwapChain(D3DContext& context) {
     RECT clientRect;
+
     GetClientRect(g_WindowHandle, &clientRect);
 
     // Compute the exact client dimensions. This will be used
     // to initialize the render targets for our swap chain.
-    unsigned int clientWidth = clientRect.right - clientRect.left;
-    unsigned int clientHeight = clientRect.bottom - clientRect.top;
+    context.width = clientRect.right - clientRect.left;
+    context.height = clientRect.bottom - clientRect.top;
 
-    DXGI_SWAP_CHAIN_DESC swapChainDesc = SwapChain(clientWidth, clientHeight, context.enableVSync);
+    DXGI_SWAP_CHAIN_DESC swapChainDesc = SwapChain(context.width, context.height, context.enableVSync);
 
     UINT createDeviceFlags = 0;
 
-#if _DEBUG
-    createDeviceFlags = D3D11_CREATE_DEVICE_DEBUG;
-#endif
+    #if _DEBUG
+        createDeviceFlags = D3D11_CREATE_DEVICE_DEBUG;
+    #endif
 
-    // These are the feature levels that we will accept.
     D3D_FEATURE_LEVEL featureLevels[] = {
         D3D_FEATURE_LEVEL_11_1,
         D3D_FEATURE_LEVEL_11_0,
@@ -74,98 +76,55 @@ int InitDirectX(HINSTANCE hInstance, D3DContext& context) {
         D3D_FEATURE_LEVEL_9_1
     };
 
-    // This will be the feature level that 
-    // is used to create our device and swap chain.
     D3D_FEATURE_LEVEL featureLevel;
 
-    HRESULT hr = D3D11CreateDeviceAndSwapChain(
-        nullptr,
-        D3D_DRIVER_TYPE_HARDWARE,
-        nullptr,
-        createDeviceFlags,
-        featureLevels,
-        _countof(featureLevels),
-        D3D11_SDK_VERSION,
-        &swapChainDesc,
-        &context.swapChain,
-        &context.device,
-        &featureLevel,
-        &context.deviceContext
-    );
-
-    if (hr == E_INVALIDARG)
-        hr = D3D11CreateDeviceAndSwapChain(
+    return FAILED(
+        D3D11CreateDeviceAndSwapChain(
             nullptr,
             D3D_DRIVER_TYPE_HARDWARE,
             nullptr,
             createDeviceFlags,
-            &featureLevels[1],
-            _countof(featureLevels) - 1,
+            featureLevels,
+            _countof(featureLevels),
             D3D11_SDK_VERSION,
             &swapChainDesc,
             &context.swapChain,
             &context.device,
             &featureLevel,
             &context.deviceContext
-        );
+        )
+    ) == false;
+}
 
-    if (FAILED(hr))
-        return -1;
-
-    // Next initialize the back buffer of the swap chain and associate it to a 
-    // render target view.
-    ID3D11Texture2D* backBuffer;
-
-    hr = context.swapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (LPVOID*)&backBuffer);
-
-    if (FAILED(hr))
-        return -1;
-
-    hr = context.device->CreateRenderTargetView(backBuffer, nullptr, &context.renderTargetView);
-
-    if (FAILED(hr))
-        return -1;
-
-    SafeRelease(backBuffer);
-
-    // Create the depth buffer for use with the depth/stencil view.
-    D3D11_TEXTURE2D_DESC depthStencilBufferDesc = Texture2D(clientWidth, clientHeight);
-
-    hr = context.device->CreateTexture2D(&depthStencilBufferDesc, nullptr, &context.depthStencilBuffer);
-
-    if (FAILED(hr))
-        return -1;
-
-    hr = context.device->CreateDepthStencilView(context.depthStencilBuffer, nullptr, &context.depthStencilView);
-
-    if (FAILED(hr))
-        return -1;
-
-    // Setup depth/stencil state.
-    D3D11_DEPTH_STENCIL_DESC depthStencilStateDesc = DepthStencil();
-
-    hr = context.device->CreateDepthStencilState(&depthStencilStateDesc, &context.depthStencilState);
-
-    if (FAILED(hr))
-        return -1;
-
-    // Setup rasterizer state.
-    D3D11_RASTERIZER_DESC rasterizerDesc = Rasterizer();
-
-    // Create the rasterizer state object.
-    hr = context.device->CreateRasterizerState(&rasterizerDesc, &context.rasterizerState);
-
-    if (FAILED(hr))
-        return -1;
-
-    // Initialize the viewport to occupy the entire client area.
-    context.viewport.Width = static_cast<float>(clientWidth);
-    context.viewport.Height = static_cast<float>(clientHeight);
+void ConfigureViewport(D3DContext& context) {
+    context.viewport.Width = static_cast<float>(context.width);
+    context.viewport.Height = static_cast<float>(context.height);
     context.viewport.TopLeftX = 0.0f;
     context.viewport.TopLeftY = 0.0f;
     context.viewport.MinDepth = 0.0f;
     context.viewport.MaxDepth = 1.0f;
+}
 
-    return 0;
+int InitDirectX(HINSTANCE hInstance, D3DContext& context) {
+    // A window handle must have been created already.
+    assert(g_WindowHandle != 0);
+
+    bool succeeded =
+        CreateDeviceAndSwapChain(context)
+        &&
+        CreateRenderTargetView(context)
+        &&
+        CreateDepthStencil(context)
+        &&
+        CreateRasterizerState(context);
+
+    if (succeeded) {
+        ConfigureViewport(context);
+
+        return 0;
+    }
+    else
+        return -1;
+
 }
 

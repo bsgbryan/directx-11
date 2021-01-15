@@ -50,10 +50,16 @@
     <ClInclude Include="Cleanup.h">
       <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="VertexPositionColor.h">
+    <ClInclude Include="structs\Descriptions.h">
       <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="structs\Descriptions.h">
+    <ClInclude Include="structs\VertexPositionColor.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="structs\D3DContext.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="enums\ConstantBuffers.h">
       <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>
