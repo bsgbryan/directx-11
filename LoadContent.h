@@ -17,116 +17,110 @@ using DirectX::XMMatrixPerspectiveFovLH;
 
 using Descriptions::Buffer;
 
-XMMATRIX g_ProjectionMatrix;
+template<typename A, std::size_t AS>
+D3D11_SUBRESOURCE_DATA CreateResourceData(A(&arr)[AS]) {
+    D3D11_SUBRESOURCE_DATA data;
 
-D3D11_SUBRESOURCE_DATA CreateResourceData() {
-    D3D11_SUBRESOURCE_DATA resourceData;
+    ZeroMemory(&data, sizeof(D3D11_SUBRESOURCE_DATA));
 
-    ZeroMemory(&resourceData, sizeof(D3D11_SUBRESOURCE_DATA));
+    data.pSysMem = arr;
 
-    return resourceData;
+    return data;
 }
 
-D3D11_BUFFER_DESC constantBufferDesc = Buffer(D3D11_BIND_CONSTANT_BUFFER, sizeof(XMMATRIX));
+template<typename V, std::size_t VS>
+bool CreateVertexBuffer(D3DContext& context, V(&vertices)[VS], UINT byteWidth) {
+    D3D11_BUFFER_DESC      desc = Buffer(D3D11_BIND_VERTEX_BUFFER, byteWidth);
+    D3D11_SUBRESOURCE_DATA data = CreateResourceData(vertices);
 
-template<typename I, typename V, std::size_t IS, std::size_t VS>
-bool LoadContent(
-    D3DContext& context,
-    I (&indicies)[IS],
-    V (&vertices)[VS],
-    UINT byteWidth
-) {
-    assert(context.device);
+    return FAILED(context.device->CreateBuffer(&desc, &data, &context.vertexBuffer)) == false;
+}
 
-    D3D11_BUFFER_DESC vertexBufferDesc = Buffer(D3D11_BIND_VERTEX_BUFFER, byteWidth);
-    D3D11_BUFFER_DESC indexBufferDesc = Buffer(D3D11_BIND_INDEX_BUFFER, sizeof(WORD) * IS);
+template<typename I, std::size_t IS>
+bool CreateIndexBuffer(D3DContext& context, I(&indicies)[IS]) {
+    D3D11_BUFFER_DESC      desc = Buffer(D3D11_BIND_INDEX_BUFFER, sizeof(WORD) * IS);
+    D3D11_SUBRESOURCE_DATA data = CreateResourceData(indicies);
 
-    D3D11_SUBRESOURCE_DATA resourceData = CreateResourceData();
+    return FAILED(context.device->CreateBuffer(&desc, &data, &context.indexBuffer)) == false;
+}
 
-    resourceData.pSysMem = vertices;
+bool CreateConstantBuffers(D3DContext& context) {
+    D3D11_BUFFER_DESC constantBufferDesc = Buffer(D3D11_BIND_CONSTANT_BUFFER, sizeof(XMMATRIX));
 
-    HRESULT hr = context.device->CreateBuffer(&vertexBufferDesc, &resourceData, &context.vertexBuffer);
+    return
+        FAILED(context.device->CreateBuffer(&constantBufferDesc, nullptr, &context.constantBuffers[CB_Application])) == false
+        &&
+        FAILED(context.device->CreateBuffer(&constantBufferDesc, nullptr, &context.constantBuffers[CB_Frame])) == false
+        &&
+        FAILED(context.device->CreateBuffer(&constantBufferDesc, nullptr, &context.constantBuffers[CB_Object])) == false;
+}
 
-    if (FAILED(hr))
-        return false;
-
-    resourceData.pSysMem = indicies;
-
-    hr = context.device->CreateBuffer(&indexBufferDesc, &resourceData, &context.indexBuffer);
-
-    if (FAILED(hr))
-        return false;
-
-    hr = context.device->CreateBuffer(&constantBufferDesc, nullptr, &context.constantBuffers[CB_Application]);
-
-    if (FAILED(hr))
-        return false;
-
-    hr = context.device->CreateBuffer(&constantBufferDesc, nullptr, &context.constantBuffers[CB_Frame]);
-
-    if (FAILED(hr))
-        return false;
-
-    hr = context.device->CreateBuffer(&constantBufferDesc, nullptr, &context.constantBuffers[CB_Object]);
-
-    if (FAILED(hr))
-        return false;
-
-    // Load the compiled vertex shader.
+bool CreateVertexShader(LPCWSTR pathToCompiledObject, D3DContext& context) {
     ID3DBlob* vertexShaderBlob;
-    LPCWSTR compiledVertexShaderObject = L"./out/SimpleVertexShader.cso";
 
-    hr = D3DReadFileToBlob(compiledVertexShaderObject, &vertexShaderBlob);
-
-    if (FAILED(hr))
-        return false;
-
-    hr = context.device->CreateVertexShader(vertexShaderBlob->GetBufferPointer(), vertexShaderBlob->GetBufferSize(), nullptr, &context.vertexShader);
-
-    if (FAILED(hr))
-        return false;
-
-    // Create the input layout for the vertex shader.
     D3D11_INPUT_ELEMENT_DESC vertexLayoutDesc[] = {
         { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, offsetof(VertexPosColor,Position), D3D11_INPUT_PER_VERTEX_DATA, 0 },
         { "COLOR", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, offsetof(VertexPosColor,Color), D3D11_INPUT_PER_VERTEX_DATA, 0 }
     };
 
-    hr = context.device->CreateInputLayout(vertexLayoutDesc, _countof(vertexLayoutDesc), vertexShaderBlob->GetBufferPointer(), vertexShaderBlob->GetBufferSize(), &context.inputLayout);
-    if (FAILED(hr))
-        return false;
+    bool succeeded =
+        FAILED(D3DReadFileToBlob(pathToCompiledObject, &vertexShaderBlob)) == false
+        &&
+        FAILED(context.device->CreateVertexShader(vertexShaderBlob->GetBufferPointer(), vertexShaderBlob->GetBufferSize(), nullptr, &context.vertexShader)) == false
+        &&
+        FAILED(context.device->CreateInputLayout(vertexLayoutDesc, _countof(vertexLayoutDesc), vertexShaderBlob->GetBufferPointer(), vertexShaderBlob->GetBufferSize(), &context.inputLayout)) == false;
 
     SafeRelease(vertexShaderBlob);
 
-    // Load the compiled pixel shader.
+    return succeeded;
+}
+
+bool CreatePixelShader(LPCWSTR pathToCompiledObject, D3DContext& context) {
     ID3DBlob* pixelShaderBlob;
-    LPCWSTR compiledPixelShaderObject = L"./out/SimplePixelShader.cso";
 
-    hr = D3DReadFileToBlob(compiledPixelShaderObject, &pixelShaderBlob);
-
-    if (FAILED(hr))
-        return false;
-
-    hr = context.device->CreatePixelShader(pixelShaderBlob->GetBufferPointer(), pixelShaderBlob->GetBufferSize(), nullptr, &context.pixelShader);
-
-    if (FAILED(hr))
-        return false;
+    bool succeeded =
+        FAILED(D3DReadFileToBlob(pathToCompiledObject, &pixelShaderBlob)) == false
+        &&
+        FAILED(context.device->CreatePixelShader(pixelShaderBlob->GetBufferPointer(), pixelShaderBlob->GetBufferSize(), nullptr, &context.pixelShader)) == false;
 
     SafeRelease(pixelShaderBlob);
 
-    // Setup the projection matrix.
+    return succeeded;
+}
+
+void ConfigureAndSetProjectionMatrix(D3DContext& context) {
     RECT clientRect;
     GetClientRect(g_WindowHandle, &clientRect);
 
-    // Compute the exact client dimensions.
-    // This is required for a correct projection matrix.
     float clientWidth = static_cast<float>(clientRect.right - clientRect.left);
     float clientHeight = static_cast<float>(clientRect.bottom - clientRect.top);
 
-    g_ProjectionMatrix = XMMatrixPerspectiveFovLH(XMConvertToRadians(45.0f), clientWidth / clientHeight, 0.1f, 100.0f);
+    XMMATRIX g_ProjectionMatrix = XMMatrixPerspectiveFovLH(XMConvertToRadians(45.0f), clientWidth / clientHeight, 0.1f, 100.0f);
 
     context.deviceContext->UpdateSubresource(context.constantBuffers[CB_Application], 0, nullptr, &g_ProjectionMatrix, 0, 0);
+}
 
-    return true;
+template<typename I, typename V, std::size_t IS, std::size_t VS>
+bool LoadContent(D3DContext& context, I (&indicies)[IS], V (&vertices)[VS], UINT byteWidth) {
+    assert(context.device);
+
+    bool succeeded =
+        CreateVertexBuffer(context, vertices, byteWidth)
+        &&
+        CreateIndexBuffer(context, indicies)
+        &&
+        CreateConstantBuffers(context)
+        &&
+        CreateVertexShader(TEXT("./out/SimpleVertexShader.cso"), context)
+        &&
+        CreatePixelShader(TEXT("./out/SimplePixelShader.cso"), context);
+
+    if (succeeded) {
+        ConfigureAndSetProjectionMatrix(context);
+
+        return true;
+    }
+    else
+        return false;
 }
 
